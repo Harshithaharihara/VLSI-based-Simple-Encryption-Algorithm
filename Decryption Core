@@ -1,0 +1,21 @@
+module decrypt_core(
+    input  [7:0] ciphertext,
+    input  [7:0] key,
+    output [7:0] plaintext
+);
+    wire [7:0] after_xor, after_rot;
+    wire [3:0] isub_hi, isub_lo;
+
+    assign after_xor = ciphertext ^ key;
+
+    rotate_right rr (
+        .data_in(after_xor),
+        .n(3'd3),
+        .data_out(after_rot)
+    );
+
+    sbox_inv si0 (.in(after_rot[7:4]), .out(isub_hi));
+    sbox_inv si1 (.in(after_rot[3:0]), .out(isub_lo));
+    assign plaintext = {isub_hi, isub_lo};
+endmodule
+
