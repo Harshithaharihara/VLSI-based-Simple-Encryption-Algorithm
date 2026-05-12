@@ -1,0 +1,68 @@
+`timescale 1ns/1ps
+
+module tb_vlsi_encryption;
+    reg        clk, rst, enc_dec;
+    reg  [7:0] data_in, key;
+    wire [7:0] data_out;
+    wire       valid;
+
+    vlsi_encryption uut (
+        .clk(clk), .rst(rst),
+        .enc_dec(enc_dec),
+        .data_in(data_in),
+        .key(key),
+        .data_out(data_out),
+        .valid(valid)
+    );
+
+    initial clk = 0;
+    always #5 clk = ~clk;
+
+    task run_encrypt_decrypt;
+        input [7:0] pt;
+        input [7:0] k;
+        reg   [7:0] ct;
+        begin
+            // Encrypt
+            @(negedge clk);
+            enc_dec  = 1; data_in = pt; key = k;
+            @(posedge clk); #1;
+            ct = data_out;
+            $display("ENCRYPT: PT=%08b (0x%02h) KEY=%08b => CT=%08b (0x%02h)",
+                      pt, pt, k, ct, ct);
+
+            // Decrypt
+            @(negedge clk);
+            enc_dec  = 0; data_in = ct; key = k;
+            @(posedge clk); #1;
+            $display("DECRYPT: CT=%08b (0x%02h) KEY=%08b => PT=%08b (0x%02h) %s",
+                      ct, ct, k, data_out, data_out,
+                      (data_out == pt) ? "[PASS]" : "[FAIL]");
+        end
+    endtask
+
+    initial begin
+        $dumpfile("vlsi_encryption.vcd");
+        $dumpvars(0, tb_vlsi_encryption);
+
+        rst = 1; enc_dec = 1; data_in = 8'h00; key = 8'h00;
+        #12; rst = 0;
+
+        $display("=== VLSI Encryption/Decryption Test ===");
+        run_encrypt_decrypt(8'hA5, 8'h3C);
+        run_encrypt_decrypt(8'hFF, 8'hAA);
+        run_encrypt_decrypt(8'h00, 8'hFF);
+        run_encrypt_decrypt(8'h55, 8'h55);
+        run_encrypt_decrypt(8'h12, 8'h34);
+        run_encrypt_decrypt(8'hDE, 8'hAD);
+
+        #20;
+        $display("=== All tests completed ===");
+        $finish;
+    end
+
+    initial
+        $monitor("t=%0t | enc_dec=%b | IN=%08b | KEY=%08b | OUT=%08b | valid=%b",
+                  $time, enc_dec, data_in, key, data_out, valid);
+endmodule
+
