@@ -1,0 +1,20 @@
+module encrypt_core(
+    input  [7:0] plaintext,
+    input  [7:0] key,
+    output [7:0] ciphertext
+);
+    wire [3:0] sub_hi, sub_lo;
+    wire [7:0] after_sub, after_rot;
+
+    sbox s0 (.in(plaintext[7:4]), .out(sub_hi));
+    sbox s1 (.in(plaintext[3:0]), .out(sub_lo));
+    assign after_sub = {sub_hi, sub_lo};
+
+    rotate_left rl (
+        .data_in(after_sub),
+        .n(3'd3),
+        .data_out(after_rot)
+    );
+
+    assign ciphertext = after_rot ^ key;
+endmodule
