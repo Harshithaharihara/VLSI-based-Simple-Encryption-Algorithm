@@ -1,0 +1,7 @@
+module rotate_right(
+    input  [7:0] data_in,
+    input  [2:0] n,
+    output [7:0] data_out
+);
+    assign data_out = (data_in >> n) | (data_in << (8 - n));
+endmodule
